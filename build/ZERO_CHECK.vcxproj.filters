@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\javier\Desktop\Tower-Defense\Tower-Defense\build\CMakeFiles\4e13e91a75e0892fc3e2e76666247975\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{56F64CB7-89E2-3B0E-8AAB-0BB205985778}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

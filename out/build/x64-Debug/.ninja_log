@@ -1,5 +1,6 @@
 # ninja log v6
-7	539	7690900373991420	CMakeFiles/TowerDefense.dir/src/main.cpp.obj	628286176144cdda
-540	3068	7690900379327664	TowerDefense.exe	c63ebc1b4f88d04c
-24	806	7690917980988718	CMakeFiles/TowerDefense.dir/src/tower.cpp.obj	e536882bfcb0f549
-15	834	7690917980898697	CMakeFiles/TowerDefense.dir/src/map.cpp.obj	44875550eb4c2a37
+26	550	7694262774607607	CMakeFiles/TowerDefense.dir/src/tower.cpp.obj	2bc266067c5c4e38
+34	598	7694262774687622	CMakeFiles/TowerDefense.dir/src/enemy.cpp.obj	257a4dabbc7ccf32
+11	606	7694262774457570	CMakeFiles/TowerDefense.dir/src/main.cpp.obj	15f118c7b0bdd914
+17	682	7694262774517594	CMakeFiles/TowerDefense.dir/src/map.cpp.obj	eb0d69c189ed8f31
+682	3238	7694262781169085	TowerDefense.exe	5715e953b8a120a

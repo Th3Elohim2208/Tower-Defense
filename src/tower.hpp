@@ -22,6 +22,5 @@ private:
     float cooldown_;
 };
 
-extern const float CELL_SIZE;
 
 #endif

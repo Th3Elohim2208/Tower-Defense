@@ -1,16 +1,18 @@
 #include "enemy.hpp"
-
-const float CELL_SIZE = 60.0f;
+#include "map.hpp"
+#include "constants.hpp"
 
 Enemy::Enemy(float speed) : speed_(speed), health_(100), pathIndex_(0) {
-    path_.push_back(sf::Vector2f(0 * CELL_SIZE + CELL_SIZE / 2, 0 * CELL_SIZE + CELL_SIZE / 2)); // (0,0)
-    for (int y = 1; y < GRID_SIZE; ++y) {
-        path_.push_back(sf::Vector2f(0 * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2));
+    position_ = sf::Vector2f(0, 0); // Comienza en la entrada
+}
+
+void Enemy::setPath(const std::vector<sf::Vector2i>& path) {
+    path_.clear();
+    for (const auto& point : path) {
+        path_.push_back(sf::Vector2f(point.x * CELL_SIZE + CELL_SIZE / 2, point.y * CELL_SIZE + CELL_SIZE / 2));
     }
-    for (int x = 1; x < GRID_SIZE; ++x) {
-        path_.push_back(sf::Vector2f(x * CELL_SIZE + CELL_SIZE / 2, 9 * CELL_SIZE + CELL_SIZE / 2));
-    }
-    position_ = path_[0];
+    if (!path_.empty()) position_ = path_[0];
+    pathIndex_ = 0;
 }
 
 void Enemy::update(float deltaTime) {
@@ -41,3 +43,4 @@ int Enemy::getHealth() const { return health_; }
 void Enemy::takeDamage(int damage) { health_ -= damage; }
 bool Enemy::isAlive() const { return health_ > 0; }
 bool Enemy::hasReachedEnd() const { return pathIndex_ >= path_.size() - 1; }
+std::vector<sf::Vector2f> Enemy::getPath() const { return path_; }

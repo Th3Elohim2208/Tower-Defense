@@ -2,17 +2,18 @@
 #include "map.hpp"
 #include "tower.hpp"
 #include "enemy.hpp"
+#include "constants.hpp"
 
 class Game {
 public:
     Game() : window_(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Tower Defense"), gold_(1000), spawnTimer_(0.0f) {
         if (!font_.loadFromFile("arial.ttf")) {
-            // Manejo de error si no se carga la fuente
+            // Manejo de error: podrías establecer una fuente por defecto o salir
         }
         goldText_.setFont(font_);
         goldText_.setCharacterSize(24);
         goldText_.setFillColor(sf::Color::Yellow);
-        goldText_.setPosition(10, 10);
+        goldText_.setPosition(sf::Vector2f(10.f, 10.f)); // Usar Vector2f
     }
     void run() {
         sf::Clock clock;
@@ -31,8 +32,8 @@ private:
                 window_.close();
             }
             else if (event.type == sf::Event::MouseButtonPressed) {
-                int x = event.mouseButton.x / CELL_SIZE;
-                int y = event.mouseButton.y / CELL_SIZE;
+                int x = static_cast<int>(event.mouseButton.x / CELL_SIZE);
+                int y = static_cast<int>(event.mouseButton.y / CELL_SIZE);
                 if (map_.canPlaceTower(x, y)) {
                     Tower::Type type = Tower::ARCHER;
                     int cost = 50;
@@ -66,6 +67,10 @@ private:
         map_.update(deltaTime, enemies_);
         for (auto it = enemies_.begin(); it != enemies_.end();) {
             auto& enemy = *it;
+            if (enemy->getPath().empty()) {
+                auto path = map_.findPath(0, 0, 9, 9);
+                enemy->setPath(path);
+            }
             enemy->update(deltaTime);
             if (!enemy->isAlive() || enemy->hasReachedEnd()) {
                 if (!enemy->isAlive()) gold_ += 10;
@@ -94,11 +99,6 @@ private:
     sf::Font font_;
     sf::Text goldText_;
 };
-
-const int GRID_SIZE = 10;
-const float CELL_SIZE = 60.0f;
-const int WINDOW_WIDTH = GRID_SIZE * CELL_SIZE;
-const int WINDOW_HEIGHT = GRID_SIZE * CELL_SIZE;
 
 int main() {
     Game game;

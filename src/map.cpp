@@ -1,26 +1,15 @@
 #include "map.hpp"
 #include "enemy.hpp"
-
-const int GRID_SIZE = 10;
-const float CELL_SIZE = 60.0f;
+#include "constants.hpp"
 
 Map::Map() : grid_(GRID_SIZE, std::vector<int>(GRID_SIZE, 0)) {
     grid_[0][0] = 1; // Entrada
     grid_[9][9] = 2; // Puente
-    // Camino inicial (ajustaremos con A* más adelante)
-    for (int y = 0; y < GRID_SIZE; ++y) {
-        grid_[0][y] = 4;
-    }
-    for (int x = 0; x < GRID_SIZE; ++x) {
-        grid_[x][9] = 4;
-    }
-    grid_[0][0] = 1; // Restaurar entrada
-    grid_[9][9] = 2; // Restaurar puente
 }
 
 bool Map::canPlaceTower(int x, int y) {
     if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return false;
-    return grid_[x][y] == 0; // Solo en celdas vacías
+    return grid_[x][y] == 0; // Permitir en celdas vacías
 }
 
 void Map::placeTower(int x, int y, std::shared_ptr<Tower> tower) {
@@ -50,4 +39,80 @@ void Map::draw(sf::RenderWindow& window) {
     for (auto& tower : towers_) {
         tower->draw(window);
     }
+}
+
+struct Node {
+    int x, y;
+    float f, g, h;
+    Node* parent;
+    Node(int x, int y) : x(x), y(y), f(0), g(0), h(0), parent(nullptr) {}
+};
+
+struct CompareNode {
+    bool operator()(const Node* a, const Node* b) {
+        return a->f > b->f;
+    }
+};
+
+std::vector<sf::Vector2i> Map::findPath(int startX, int startY, int endX, int endY) {
+    std::priority_queue<Node*, std::vector<Node*>, CompareNode> openSet;
+    std::unordered_map<int, Node*> allNodes;
+    std::vector<Node*> closedSet;
+
+    Node* start = new Node(startX, startY);
+    openSet.push(start);
+    allNodes[startX * GRID_SIZE + startY] = start;
+
+    int dx[] = { 0, 0, 1, -1 };
+    int dy[] = { 1, -1, 0, 0 };
+
+    while (!openSet.empty()) {
+        Node* current = openSet.top();
+        openSet.pop();
+        closedSet.push_back(current);
+
+        if (current->x == endX && current->y == endY) {
+            std::vector<sf::Vector2i> path;
+            while (current) {
+                path.push_back(sf::Vector2i(current->x, current->y));
+                current = current->parent;
+            }
+            std::reverse(path.begin(), path.end());
+            for (auto* node : closedSet) delete node;
+            for (auto& pair : allNodes) delete pair.second;
+            return path;
+        }
+
+        for (int i = 0; i < 4; ++i) {
+            int newX = current->x + dx[i];
+            int newY = current->y + dy[i];
+            if (newX < 0 || newX >= GRID_SIZE || newY < 0 || newY >= GRID_SIZE) continue;
+            if (grid_[newX][newY] == 3) continue; // Evitar torres
+
+            float g = current->g + 1.0f;
+            float h = std::sqrt((newX - endX) * (newX - endX) + (newY - endY) * (newY - endY));
+            float f = g + h;
+
+            int key = newX * GRID_SIZE + newY;
+            Node* neighbor = allNodes[key];
+            if (!neighbor) {
+                neighbor = new Node(newX, newY);
+                allNodes[key] = neighbor;
+                openSet.push(neighbor);
+            }
+            else if (g >= neighbor->g) {
+                continue;
+            }
+
+            neighbor->parent = current;
+            neighbor->g = g;
+            neighbor->h = h;
+            neighbor->f = f;
+        }
+    }
+
+    std::vector<sf::Vector2i> emptyPath;
+    for (auto* node : closedSet) delete node;
+    for (auto& pair : allNodes) delete pair.second;
+    return emptyPath; // No se encontró camino
 }

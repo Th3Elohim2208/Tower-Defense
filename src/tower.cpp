@@ -1,7 +1,6 @@
 #include "tower.hpp"
 #include "enemy.hpp"
-
-const float CELL_SIZE = 60.0f;
+#include "constants.hpp"
 
 Tower::Tower(Type type, int x, int y) : type_(type), x_(x), y_(y), cooldown_(0.0f) {
     switch (type) {

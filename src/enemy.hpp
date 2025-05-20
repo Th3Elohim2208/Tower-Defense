@@ -7,6 +7,7 @@
 class Enemy {
 public:
     Enemy(float speed);
+    void setPath(const std::vector<sf::Vector2i>& path);
     void update(float deltaTime);
     void draw(sf::RenderWindow& window);
     sf::Vector2f getPosition() const;
@@ -14,6 +15,7 @@ public:
     void takeDamage(int damage);
     bool isAlive() const;
     bool hasReachedEnd() const;
+    std::vector<sf::Vector2f> getPath() const; // Añadido
 private:
     float speed_;
     int health_;
@@ -22,6 +24,5 @@ private:
     size_t pathIndex_;
 };
 
-extern const float CELL_SIZE;
 
 #endif
