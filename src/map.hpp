@@ -18,6 +18,8 @@ public:
     void placeTower(int x, int y, std::shared_ptr<Tower> tower);
     std::vector<sf::Vector2i> getCurrentPath() const;
     int getPathVersion() const { return pathVersion_; } // Añadir getter para pathVersion_
+    std::vector<std::shared_ptr<Tower>>& getTowers() { return towers_; } // Nuevo método
+
 private:
     struct Node {
         int x, y;

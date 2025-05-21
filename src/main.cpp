@@ -4,13 +4,15 @@
 #include "enemy.hpp"
 #include "constants.hpp"
 #include <sstream>
+#include <ctime> // Para time(NULL)
 
 class Game {
+    // [Código de Game sin cambios hasta el método run]
 public:
-    Game() : window_(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Tower Defense"), gold_(1000), spawnTimer_(0.0f), selectedTowerType_(Tower::ARCHER) {
+    Game() : window_(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Tower Defense"), gold_(1000), spawnTimer_(0.0f), selectedTowerType_(Tower::ARCHER), selectedTower_(nullptr) {
         if (!font_.loadFromFile("arial.ttf")) {
             if (!font_.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
-                // Si no se puede cargar, el texto no se mostrará
+                // Si no se carga, el texto no se mostrará
             }
         }
 
@@ -22,16 +24,25 @@ public:
 
         // Configurar los botones y etiquetas de las torres
         for (int i = 0; i < 3; ++i) {
-            towerButtons_[i].setSize(sf::Vector2f(UI_WIDTH - 20.f, 100.f));
-            towerButtons_[i].setPosition(MAP_WIDTH + 10.f, 50.f + i * 120.f);
+            towerButtons_[i].setSize(sf::Vector2f(230.f, 100.f));
+            towerButtons_[i].setPosition(MAP_WIDTH + 20.f, 50.f + i * 120.f);
             towerLabels_[i].setFont(font_);
-            towerLabels_[i].setCharacterSize(16);
+            towerLabels_[i].setCharacterSize(14);
             towerLabels_[i].setFillColor(sf::Color::White);
             float buttonY = 50.f + i * 120.f;
-            float marginTop = 5.f;
+            float marginTop = 0.f;
             float textY = buttonY + marginTop;
-            towerLabels_[i].setPosition(MAP_WIDTH + 20.f, textY);
+            towerLabels_[i].setPosition(MAP_WIDTH + 30.f, textY);
         }
+
+        // Botón de upgrade
+        upgradeButton_.setSize(sf::Vector2f(210.f, 30.f));
+        upgradeButton_.setPosition(MAP_WIDTH + 20.f, 50.f + 3 * 120.f);
+        upgradeButton_.setFillColor(sf::Color::Blue);
+        upgradeText_.setFont(font_);
+        upgradeText_.setCharacterSize(14);
+        upgradeText_.setFillColor(sf::Color::White);
+        upgradeText_.setPosition(MAP_WIDTH + 30.f, 55.f + 3 * 120.f);
 
         towerButtons_[0].setFillColor(sf::Color::Green);
         towerButtons_[1].setFillColor(sf::Color(128, 0, 128));
@@ -53,14 +64,25 @@ public:
 private:
     void updateTowerLabels() {
         std::stringstream ss;
-        ss << "Archer\nCost: 50\nDamage: 10\nRange: 150\nAttack Speed: 1.0s";
+        ss << "Archer\nCost: 50\nDamage: 10/20/35/50\nRange: 150/200/225/250\nAttack Speed: 1.0/0.75/0.65/0.5s\nSpecial Attack: 20%";
         towerLabels_[0].setString(ss.str());
         ss.str("");
-        ss << "Mage\nCost: 100\nDamage: 20\nRange: 200\nAttack Speed: 2.0s";
+        ss << "Mage\nCost: 100\nDamage: 20/35/50/75\nRange: 200/225/250/275\nAttack Speed: 2.0/1.5/1.25/1.0s\nSpecial Attack: 15%";
         towerLabels_[1].setString(ss.str());
         ss.str("");
-        ss << "Artillery\nCost: 200\nDamage: 50\nRange: 100\nAttack Speed: 3.0s";
+        ss << "Artillery\nCost: 200\nDamage: 50/75/100/125\nRange: 100/125/150/175\nAttack Speed: 3.0/2.5/2.0/1.5s\nSpecial Attack: 10%";
         towerLabels_[2].setString(ss.str());
+    }
+
+    void updateUpgradeText() {
+        std::stringstream ss;
+        if (selectedTower_) {
+            ss << "Upgrade " << selectedTower_->getUpgradeCost() << " gold, Level " << (selectedTower_->getUpgradeLevel() + 1);
+        }
+        else {
+            ss << "Select a tower to upgrade";
+        }
+        upgradeText_.setString(ss.str());
     }
 
     void handleEvents() {
@@ -86,6 +108,27 @@ private:
                         if (gold_ >= cost) {
                             map_.placeTower(x, y, tower);
                             gold_ -= cost;
+                        }
+                    }
+                }
+                if (mousePos.x < MAP_WIDTH) {
+                    int x = static_cast<int>(mousePos.x / CELL_SIZE);
+                    int y = static_cast<int>(mousePos.y / CELL_SIZE);
+                    selectedTower_ = nullptr;
+                    for (auto& tower : map_.getTowers()) {
+                        if (tower->getX() == x && tower->getY() == y) {
+                            selectedTower_ = tower;
+                            break;
+                        }
+                    }
+                    updateUpgradeText();
+                }
+                if (upgradeButton_.getGlobalBounds().contains(mousePos.x, mousePos.y) && selectedTower_) {
+                    int upgradeCost = selectedTower_->getUpgradeCost();
+                    if (gold_ >= upgradeCost && selectedTower_->canUpgrade()) {
+                        if (selectedTower_->upgrade()) {
+                            gold_ -= upgradeCost;
+                            updateUpgradeText();
                         }
                     }
                 }
@@ -121,24 +164,23 @@ private:
 
     void render() {
         window_.clear(sf::Color::Black);
-        // Dibujar el fondo negro para la interfaz
         sf::RectangleShape uiBackground(sf::Vector2f(UI_WIDTH, WINDOW_HEIGHT));
         uiBackground.setPosition(MAP_WIDTH, 0);
         uiBackground.setFillColor(sf::Color::Black);
         window_.draw(uiBackground);
 
-        // Dibujar el mapa y los enemigos
         map_.draw(window_);
         for (const auto& enemy : enemies_) {
             enemy->draw(window_);
         }
 
-        // Dibujar la interfaz
         window_.draw(goldText_);
         for (int i = 0; i < 3; ++i) {
             window_.draw(towerButtons_[i]);
             window_.draw(towerLabels_[i]);
         }
+        window_.draw(upgradeButton_);
+        window_.draw(upgradeText_);
 
         window_.display();
     }
@@ -153,9 +195,13 @@ private:
     Tower::Type selectedTowerType_;
     sf::RectangleShape towerButtons_[3];
     sf::Text towerLabels_[3];
+    sf::RectangleShape upgradeButton_;
+    sf::Text upgradeText_;
+    std::shared_ptr<Tower> selectedTower_;
 };
 
 int main() {
+    srand(time(NULL)); 
     Game game;
     game.run();
     return 0;

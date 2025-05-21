@@ -1,9 +1,11 @@
 #ifndef TOWER_HPP
 #define TOWER_HPP
-
+#include "constants.hpp" 
 #include <SFML/Graphics.hpp>
 #include <memory>
+#include <vector>
 #include "enemy.hpp"
+#include "projectile.hpp"
 
 class Tower {
 public:
@@ -16,6 +18,13 @@ public:
     float getRange() const;
     float getAttackSpeed() const;
     Type getType() const { return type_; }
+    int getUpgradeLevel() const { return upgradeLevel_; }
+    bool canUpgrade() const { return upgradeLevel_ < 3; }
+    int getUpgradeCost() const;
+    bool upgrade();
+    int getX() const { return static_cast<int>(position_.x / CELL_SIZE); }
+    int getY() const { return static_cast<int>(position_.y / CELL_SIZE); }
+
 private:
     Type type_;
     sf::Vector2f position_;
@@ -24,6 +33,20 @@ private:
     int damage_;
     float range_;
     float attackSpeed_;
+    int upgradeLevel_;
+    sf::RectangleShape shape;
+    sf::Text levelText;
+    sf::Font font;
+    std::vector<std::shared_ptr<Projectile>> projectiles_; // Lista de proyectiles
+
+    // Ataque especial
+    float specialAttackCooldown;
+    float specialAttackInterval;
+    float specialAttackChance;
+    void performSpecialAttack(std::vector<std::shared_ptr<Enemy>>& enemies);
+
+    void initializeAttributes();
+    void updateLevelText();
 };
 
 #endif

@@ -17,7 +17,7 @@ add_executable(TowerDefense
     src/map.cpp
     src/tower.cpp
     src/enemy.cpp
-)
+ "src/projectile.cpp")
 
 # Vincular SFML al ejecutable
 target_link_libraries(TowerDefense sfml-graphics sfml-window sfml-system)
