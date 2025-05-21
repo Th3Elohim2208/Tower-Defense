@@ -3,24 +3,27 @@
 
 #include <SFML/Graphics.hpp>
 #include <memory>
-#include <vector>
+#include "enemy.hpp"
 
 class Tower {
 public:
     enum Type { ARCHER, MAGE, ARTILLERY };
     Tower(Type type, int x, int y);
+    void update(float deltaTime, std::vector<std::shared_ptr<Enemy>>& enemies);
     void draw(sf::RenderWindow& window);
-    void update(float deltaTime, std::vector<std::shared_ptr<class Enemy>>& enemies);
     int getCost() const;
+    int getDamage() const;
+    float getRange() const;
+    float getAttackSpeed() const;
+    Type getType() const { return type_; }
 private:
     Type type_;
-    int x_, y_;
+    sf::Vector2f position_;
+    float attackCooldown_;
+    float attackTimer_;
     int damage_;
     float range_;
-    float attack_cooldown_;
-    int cost_;
-    float cooldown_;
+    float attackSpeed_;
 };
-
 
 #endif

@@ -1,43 +1,68 @@
 #include "tower.hpp"
-#include "enemy.hpp"
 #include "constants.hpp"
+#include <cmath>
 
-Tower::Tower(Type type, int x, int y) : type_(type), x_(x), y_(y), cooldown_(0.0f) {
-    switch (type) {
-    case ARCHER:
-        damage_ = 10; range_ = 3; attack_cooldown_ = 1.0f; cost_ = 50;
-        break;
-    case MAGE:
-        damage_ = 20; range_ = 2; attack_cooldown_ = 2.0f; cost_ = 100;
-        break;
-    case ARTILLERY:
-        damage_ = 50; range_ = 1; attack_cooldown_ = 3.0f; cost_ = 200;
-        break;
+Tower::Tower(Type type, int x, int y) : type_(type), position_(x* CELL_SIZE + CELL_SIZE / 2, y* CELL_SIZE + CELL_SIZE / 2), attackTimer_(0.0f) {
+    if (type_ == ARCHER) {
+        damage_ = 10;
+        range_ = 150.0f;
+        attackSpeed_ = 1.0f;
     }
-}
-
-void Tower::draw(sf::RenderWindow& window) {
-    sf::CircleShape shape(CELL_SIZE / 4);
-    shape.setPosition(x_ * CELL_SIZE + CELL_SIZE / 4, y_ * CELL_SIZE + CELL_SIZE / 4);
-    shape.setFillColor(type_ == ARCHER ? sf::Color::Green : type_ == MAGE ? sf::Color::Blue : sf::Color::Red);
-    window.draw(shape);
+    else if (type_ == MAGE) {
+        damage_ = 20;
+        range_ = 200.0f;
+        attackSpeed_ = 2.0f;
+    }
+    else { // ARTILLERY
+        damage_ = 50;
+        range_ = 100.0f;
+        attackSpeed_ = 3.0f;
+    }
+    attackCooldown_ = attackSpeed_;
 }
 
 void Tower::update(float deltaTime, std::vector<std::shared_ptr<Enemy>>& enemies) {
-    cooldown_ -= deltaTime;
-    if (cooldown_ <= 0.0f) {
+    attackTimer_ += deltaTime;
+    if (attackTimer_ >= attackCooldown_) {
         for (auto& enemy : enemies) {
             if (!enemy->isAlive()) continue;
-            float dx = (x_ * CELL_SIZE + CELL_SIZE / 2) - enemy->getPosition().x;
-            float dy = (y_ * CELL_SIZE + CELL_SIZE / 2) - enemy->getPosition().y;
-            float distance = std::sqrt(dx * dx + dy * dy) / CELL_SIZE;
+            sf::Vector2f enemyPos = enemy->getPosition();
+            float distance = std::sqrt(std::pow(enemyPos.x - position_.x, 2) + std::pow(enemyPos.y - position_.y, 2));
             if (distance <= range_) {
                 enemy->takeDamage(damage_);
-                cooldown_ = attack_cooldown_;
+                attackTimer_ = 0.0f;
                 break;
             }
         }
     }
 }
 
-int Tower::getCost() const { return cost_; }
+void Tower::draw(sf::RenderWindow& window) {
+    sf::RectangleShape shape(sf::Vector2f(CELL_SIZE / 2, CELL_SIZE / 2));
+    shape.setPosition(position_.x - CELL_SIZE / 4, position_.y - CELL_SIZE / 4);
+    if (type_ == ARCHER) {
+        shape.setFillColor(sf::Color::Green);
+    }
+    else if (type_ == MAGE) {
+        shape.setFillColor(sf::Color(128, 0, 128));
+    }
+    else { // ARTILLERY
+        shape.setFillColor(sf::Color(139, 69, 19));
+    }
+    window.draw(shape);
+
+    sf::CircleShape rangeCircle(range_);
+    rangeCircle.setPosition(position_.x - range_, position_.y - range_);
+    rangeCircle.setFillColor(sf::Color(255, 255, 255, 50));
+    window.draw(rangeCircle);
+}
+
+int Tower::getCost() const {
+    if (type_ == ARCHER) return 50;
+    if (type_ == MAGE) return 100;
+    return 200; // ARTILLERY
+}
+
+int Tower::getDamage() const { return damage_; }
+float Tower::getRange() const { return range_; }
+float Tower::getAttackSpeed() const { return attackSpeed_; }

@@ -22,7 +22,7 @@ add_executable(TowerDefense
 # Vincular SFML al ejecutable
 target_link_libraries(TowerDefense sfml-graphics sfml-window sfml-system)
 
-# Copiar DLLs
+# Copiar DLLs (para Windows)
 if(WIN32)
     add_custom_command(TARGET TowerDefense POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
