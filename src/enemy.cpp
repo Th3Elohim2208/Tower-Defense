@@ -1,9 +1,49 @@
 #include "enemy.hpp"
 #include "map.hpp"
 #include "constants.hpp"
+#include <cmath>
+#include <limits>
 
-Enemy::Enemy(float speed) : speed_(speed), health_(100), pathIndex_(0), removeWithoutGold_(false), pathVersion_(0) {
+Enemy::Enemy(Type type)
+    : pathIndex_(0), removeWithoutGold_(false), pathVersion_(0), type_(type) {
     position_ = sf::Vector2f(0, 0);
+    shape_.setRadius(CELL_SIZE / 4);
+    shape_.setOrigin(CELL_SIZE / 8, CELL_SIZE / 8);
+
+    switch (type_) {
+    case OGRE:
+        health_ = 100;
+        speed_ = 50.0f;
+        arrowResistance_ = 0.5f; // Resistente: 50% del daño
+        magicResistance_ = 1.5f; // Débil: 150% del daño
+        artilleryResistance_ = 1.5f; // Débil: 150% del daño
+        shape_.setFillColor(sf::Color(0, 100, 0));
+        break;
+    case DARK_ELF:
+        health_ = 80;
+        speed_ = 100.0f;
+        arrowResistance_ = 1.5f; // Débil: 150% del daño
+        magicResistance_ = 0.5f; // Resistente: 50% del daño
+        artilleryResistance_ = 1.5f; // Débil: 150% del daño
+        shape_.setFillColor(sf::Color(128, 0, 128));
+        break;
+    case HARPY:
+        health_ = 60;
+        speed_ = 75.0f;
+        arrowResistance_ = 1.0f; // Normal: 100% del daño
+        magicResistance_ = 1.0f; // Normal: 100% del daño
+        artilleryResistance_ = 0.0f; // Inmune: 0% del daño
+        shape_.setFillColor(sf::Color(255, 165, 0));
+        break;
+    case MERCENARY:
+        health_ = 90;
+        speed_ = 60.0f;
+        arrowResistance_ = 0.5f; // Resistente: 50% del daño
+        magicResistance_ = 1.5f; // Débil: 150% del daño
+        artilleryResistance_ = 0.5f; // Resistente: 50% del daño
+        shape_.setFillColor(sf::Color::Red);
+        break;
+    }
 }
 
 void Enemy::setPath(const std::vector<sf::Vector2i>& path) {
@@ -35,27 +75,44 @@ void Enemy::update(float deltaTime) {
         sf::Vector2f target = path_[pathIndex_ + 1];
         sf::Vector2f direction = target - position_;
         float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-        if (distance < speed_ * deltaTime) {
+        float step = speed_ * deltaTime;
+
+        if (distance <= step) {
+            position_ = target; // Llegamos al punto exacto
             pathIndex_++;
-            position_ = target;
         }
         else {
-            direction /= distance;
-            position_ += direction * speed_ * deltaTime;
+            direction /= distance; // Normalizamos la dirección
+            position_ += direction * step; // Movimiento suave
         }
     }
 }
 
 void Enemy::draw(sf::RenderWindow& window) {
-    sf::CircleShape shape(CELL_SIZE / 4);
-    shape.setPosition(position_.x - CELL_SIZE / 4, position_.y - CELL_SIZE / 4);
-    shape.setFillColor(sf::Color::Red);
-    window.draw(shape);
+    shape_.setPosition(position_.x - CELL_SIZE / 4, position_.y - CELL_SIZE / 4);
+    window.draw(shape_);
 }
 
 sf::Vector2f Enemy::getPosition() const { return position_; }
 int Enemy::getHealth() const { return health_; }
-void Enemy::takeDamage(int damage) { health_ -= damage; }
+
+void Enemy::takeDamage(int damage, Tower::Type towerType) {
+    float effectiveDamage = static_cast<float>(damage);
+    switch (towerType) {
+    case Tower::ARCHER:
+        effectiveDamage *= arrowResistance_;
+        break;
+    case Tower::MAGE:
+        effectiveDamage *= magicResistance_;
+        break;
+    case Tower::ARTILLERY:
+        effectiveDamage *= artilleryResistance_;
+        break;
+    }
+    health_ -= static_cast<int>(effectiveDamage);
+    if (health_ < 0) health_ = 0;
+}
+
 bool Enemy::isAlive() const { return health_ > 0; }
 bool Enemy::hasReachedEnd() const { return pathIndex_ >= path_.size() - 1; }
 std::vector<sf::Vector2f> Enemy::getPath() const { return path_; }
@@ -66,11 +123,12 @@ bool Enemy::isOnCurrentPath(const std::vector<sf::Vector2i>& currentPath) const 
     }
     return false;
 }
-
 void Enemy::markForRemovalDueToPathFailure() {
     removeWithoutGold_ = true;
 }
-
 bool Enemy::shouldRemoveWithoutGold() const {
     return removeWithoutGold_;
+}
+Enemy::Type Enemy::getType() const { // Definición correcta con el tipo de retorno adecuado
+    return type_;
 }

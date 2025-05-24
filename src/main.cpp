@@ -4,12 +4,12 @@
 #include "enemy.hpp"
 #include "constants.hpp"
 #include <sstream>
-#include <ctime> // Para time(NULL)
+#include <ctime>
+#include <memory> // Añadimos para shared_ptr
 
 class Game {
-    // [Código de Game sin cambios hasta el método run]
 public:
-    Game() : window_(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Tower Defense"), gold_(1000), spawnTimer_(0.0f), selectedTowerType_(Tower::ARCHER), selectedTower_(nullptr) {
+    Game() : window_(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Tower Defense"), gold_(11000), spawnTimer_(0.0f), selectedTowerType_(Tower::ARCHER), selectedTower_(nullptr) {
         if (!font_.loadFromFile("arial.ttf")) {
             if (!font_.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
                 // Si no se carga, el texto no se mostrará
@@ -38,14 +38,14 @@ public:
         // Botón de upgrade
         upgradeButton_.setSize(sf::Vector2f(210.f, 30.f));
         upgradeButton_.setPosition(MAP_WIDTH + 20.f, 50.f + 3 * 120.f);
-        upgradeButton_.setFillColor(sf::Color::Blue);
+        upgradeButton_.setFillColor(sf::Color(150, 150, 150));
         upgradeText_.setFont(font_);
         upgradeText_.setCharacterSize(14);
-        upgradeText_.setFillColor(sf::Color::White);
+        upgradeText_.setFillColor(sf::Color::Black);
         upgradeText_.setPosition(MAP_WIDTH + 30.f, 55.f + 3 * 120.f);
 
         towerButtons_[0].setFillColor(sf::Color::Green);
-        towerButtons_[1].setFillColor(sf::Color(128, 0, 128));
+        towerButtons_[1].setFillColor(sf::Color::Blue);
         towerButtons_[2].setFillColor(sf::Color(139, 69, 19));
 
         updateTowerLabels();
@@ -139,7 +139,8 @@ private:
     void update(float deltaTime) {
         spawnTimer_ += deltaTime;
         if (spawnTimer_ >= 2.0f) {
-            auto enemy = std::make_shared<Enemy>(50.0f);
+            Enemy::Type enemyType = static_cast<Enemy::Type>(rand() % 4); // Generar tipo aleatorio
+            auto enemy = std::make_shared<Enemy>(enemyType);
             auto path = map_.getCurrentPath();
             enemy->setPath(path);
             enemy->setPathVersion(map_.getPathVersion());
@@ -149,10 +150,30 @@ private:
         map_.update(deltaTime, enemies_);
         for (auto it = enemies_.begin(); it != enemies_.end();) {
             auto& enemy = *it;
-            if (!enemy->isAlive() || enemy->hasReachedEnd() || enemy->shouldRemoveWithoutGold()) {
-                if (!enemy->isAlive() && !enemy->shouldRemoveWithoutGold()) {
+            if (!enemy->isAlive()) {
+                // Otorgar oro según el tipo de enemigo
+                switch (enemy->getType()) {
+                case Enemy::OGRE:
                     gold_ += 10;
+                    break;
+                case Enemy::DARK_ELF:
+                    gold_ += 15;
+                    break;
+                case Enemy::HARPY:
+                    gold_ += 20;
+                    break;
+                case Enemy::MERCENARY:
+                    gold_ += 12;
+                    break;
                 }
+                it = enemies_.erase(it);
+            }
+            else if (enemy->hasReachedEnd()) {
+                // Simplemente eliminamos al enemigo sin penalización de oro
+                it = enemies_.erase(it);
+            }
+            else if (enemy->shouldRemoveWithoutGold()) {
+                // Eliminar sin otorgar oro si se salió del camino
                 it = enemies_.erase(it);
             }
             else {
@@ -201,7 +222,7 @@ private:
 };
 
 int main() {
-    srand(time(NULL)); 
+    srand(time(NULL));
     Game game;
     game.run();
     return 0;

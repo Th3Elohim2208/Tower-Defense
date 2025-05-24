@@ -1,8 +1,11 @@
 #include "tower.hpp"
+#include "enemy.hpp" // Incluimos la definición completa de Enemy
+#include "projectile.hpp" // Incluimos la definición completa de Projectile
 #include "constants.hpp"
 #include <cmath>
 #include <sstream>
 #include <cstdlib>
+#include <memory> // Añadimos para shared_ptr
 
 Tower::Tower(Type type, int x, int y) : type_(type), position_(x* CELL_SIZE + CELL_SIZE / 2, y* CELL_SIZE + CELL_SIZE / 2), attackTimer_(0.0f), upgradeLevel_(0), specialAttackCooldown(0.f) {
     if (!font.loadFromFile("arial.ttf")) {
@@ -14,7 +17,7 @@ Tower::Tower(Type type, int x, int y) : type_(type), position_(x* CELL_SIZE + CE
     initializeAttributes();
     shape.setSize(sf::Vector2f(CELL_SIZE / 2, CELL_SIZE / 2));
     if (type_ == ARCHER) shape.setFillColor(sf::Color::Green);
-    else if (type_ == MAGE) shape.setFillColor(sf::Color(128, 0, 128));
+    else if (type_ == MAGE) shape.setFillColor(sf::Color::Blue);
     else shape.setFillColor(sf::Color(139, 69, 19));
     shape.setPosition(position_.x - CELL_SIZE / 4, position_.y - CELL_SIZE / 4);
     levelText.setFont(font);
@@ -58,7 +61,7 @@ void Tower::update(float deltaTime, std::vector<std::shared_ptr<Enemy>>& enemies
         if ((*it)->hasReachedTarget()) {
             auto target = (*it)->getTarget();
             if (target && target->isAlive()) {
-                target->takeDamage((*it)->getDamage());
+                target->takeDamage((*it)->getDamage(), type_); // Usamos Tower::Type
             }
             it = projectiles_.erase(it);
         }
@@ -76,7 +79,7 @@ void Tower::update(float deltaTime, std::vector<std::shared_ptr<Enemy>>& enemies
             if (distance <= range_) {
                 sf::Color projectileColor;
                 if (type_ == ARCHER) projectileColor = sf::Color::Green;
-                else if (type_ == MAGE) projectileColor = sf::Color(128, 0, 128);
+                else if (type_ == MAGE) projectileColor = sf::Color::Blue;
                 else projectileColor = sf::Color(139, 69, 19);
                 auto projectile = std::make_shared<Projectile>(position_, enemy, damage_, 200.f, projectileColor);
                 projectiles_.push_back(projectile);

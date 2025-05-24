@@ -1,9 +1,11 @@
 #ifndef PROJECTILE_HPP
 #define PROJECTILE_HPP
-
+#include "constants.hpp"
 #include <SFML/Graphics.hpp>
-#include "enemy.hpp"
-#include <memory>
+#include <memory> // Añadimos para shared_ptr
+
+// Declaración forward de Enemy
+class Enemy;
 
 class Projectile {
 public:

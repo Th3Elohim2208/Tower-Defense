@@ -1,11 +1,14 @@
 #ifndef TOWER_HPP
 #define TOWER_HPP
-#include "constants.hpp" 
+
+#include "constants.hpp"
 #include <SFML/Graphics.hpp>
-#include <memory>
+#include <memory> // Añadimos para shared_ptr
 #include <vector>
-#include "enemy.hpp"
-#include "projectile.hpp"
+
+// Declaraciones forward
+class Enemy;
+class Projectile;
 
 class Tower {
 public:
@@ -37,9 +40,8 @@ private:
     sf::RectangleShape shape;
     sf::Text levelText;
     sf::Font font;
-    std::vector<std::shared_ptr<Projectile>> projectiles_; // Lista de proyectiles
+    std::vector<std::shared_ptr<Projectile>> projectiles_;
 
-    // Ataque especial
     float specialAttackCooldown;
     float specialAttackInterval;
     float specialAttackChance;
