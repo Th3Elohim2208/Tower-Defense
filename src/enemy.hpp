@@ -4,27 +4,32 @@
 #include "constants.hpp" 
 #include <SFML/Graphics.hpp>
 #include <vector>
-#include "tower.hpp" // Mantenemos para Tower::Type
+#include "tower.hpp"
 
 class Enemy {
 public:
     enum Type { OGRE, DARK_ELF, HARPY, MERCENARY };
-    Enemy(Type type);
+    Enemy(Type type, sf::Font& font);
     void update(float deltaTime);
     void draw(sf::RenderWindow& window);
     sf::Vector2f getPosition() const;
     int getHealth() const;
-    void takeDamage(int damage, Tower::Type towerType); // Ajustamos a Tower::Type
+    void setHealth(int health);
+    float getSpeed() const;
+    void setSpeed(float speed);
+    void takeDamage(int damage, Tower::Type towerType);
     bool isAlive() const;
     bool hasReachedEnd() const;
     std::vector<sf::Vector2f> getPath() const;
+    size_t getPathIndex() const { return pathIndex_; }
     bool isOnCurrentPath(const std::vector<sf::Vector2i>& currentPath) const;
     void setPath(const std::vector<sf::Vector2i>& path);
     void markForRemovalDueToPathFailure();
     bool shouldRemoveWithoutGold() const;
     int getPathVersion() const { return pathVersion_; }
     void setPathVersion(int version) { pathVersion_ = version; }
-    Type getType() const; // Declaración correcta de getType()
+    Type getType() const;
+    float calculateFitness(float distance, float remainingHealth);
 
 private:
     sf::Vector2f position_;
@@ -39,6 +44,8 @@ private:
     float magicResistance_;
     float artilleryResistance_;
     sf::CircleShape shape_;
+    sf::Text fitnessText_;
+    float fitness_;
 };
 
 #endif
